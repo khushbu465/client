@@ -2,31 +2,19 @@ import React, { useEffect, useState } from 'react'
 import styled from "styled-components";
 import Layout from './Layout';
 import { Button, Modal, ModalBody, Form, Row, Col, FormFeedback, Input, FormGroup, Label, ModalHeader, Table, Spinner } from "reactstrap";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaUser, FaBus, FaRegClock } from "react-icons/fa";
 //Flatpickr
 import "flatpickr/dist/themes/material_blue.css"
 import Flatpickr from "react-flatpickr"
 import moment from "moment";
 import { toast } from 'react-toastify';
-
-
-const shiftsData = {
-    Monday: [{ type: "Night", time: "17:01-24:31", bgColor: "#fff" }],
-    Tuesday: [{ type: "Noon", time: "16:12-24:31", bgColor: "#fff" }],
-    Wednesday: [
-        { type: "Split", time: "06:22-16:06", bgColor: "#fff" },
-        { type: "Other", time: "13:02-23:51", bgColor: "#fff" },
-    ],
-    Thursday: [{ type: "Morning", time: "06:55-13:26", bgColor: "#fff" }],
-    Friday: [{ type: "Split", time: "06:12-16:19", bgColor: "#fff" }],
-    Saturday: [{ type: "Full Day", time: "06:55-16:15", bgColor: "#fff" }],
-    Sunday: [],
-};
+import { GiDuration } from "react-icons/gi";
 
 const allDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",];
 
 const Duty = () => {
     const [modal, setModal] = useState(false);
+    const [shiftsData, setShiftsData] = useState({});
 
     const [loading, setLoading] = useState(false);
     const [duty_date, setDuty_date] = useState();
@@ -51,6 +39,7 @@ const Duty = () => {
     //fetch Duties
     const fetchDuties = async () => {
         try {
+            setLoading(true)
             let response = await fetch(`${api_url}/getall`, {
                 method: 'GET',
                 headers: {
@@ -58,8 +47,24 @@ const Duty = () => {
                 },
             });
             if (response.status === 200) {
+                setLoading(false)
                 const results = await response.json();
-                setAllDuties(results.data)
+                const apiData = results.data;
+                setAllDuties(apiData);
+                const formattedData = {};
+                apiData.forEach((shift) => {
+                    const day = new Date(shift.date).toLocaleDateString("en-US", { weekday: "long" });
+                    if (!formattedData[day]) formattedData[day] = [];
+                    formattedData[day].push({
+                        vehicle: shift.vehicleId.name,
+                        driver: shift.driverId.name,
+                        conductor: shift.conductorId.name,
+                        startTime: shift.startTime,
+                        duration: `${shift.duration} hrs`,
+                        bgColor: "#fff",
+                    });
+                });
+                setShiftsData(formattedData);
             }
         } catch (err) {
             console.log(err, 'data fetching error')
@@ -136,7 +141,7 @@ const Duty = () => {
                     setFormData({
                         vehicle: '', driver: '', conductor: '', duration: ''
                     });
-
+                    fetchDuties();
                 } else {
                     toast.error('Something went wrong!')
                 }
@@ -163,27 +168,35 @@ const Duty = () => {
                     <Button className='btn btn-primary' onClick={() => setModal(true)}><FaPlus />   Add New</Button>
                 </div>
                 <hr />
-                <ScheduleContainer>
-                    {allDays.map((day) => (
-                        <DayColumn key={day}>
-                            <Title>{day}</Title>
-                            {shiftsData[day]?.length > 0 ? (
-                                shiftsData[day].map((shift, index) => (
-                                    <Shift key={index} bgColor={shift.bgColor}>
-                                        <p className='mb-1'><span className='text-muted'>Vehicle:</span>dfdsf </p>
-                                        <p className='mb-1'><span className='text-muted'>Driver:</span> </p>
-                                        <p className='mb-1'><span className='text-muted'>Conductor:</span> </p>
-                                        <p className='mb-1'><span className='text-muted'>Start Time:</span> </p>
-                                        <p className='mb-1'><span className='text-muted'>Duration:</span> </p>
-                                    </Shift>
-                                ))
-                            ) : (
-                                <Shift bgColor="#bdc3c7">DAY OFF</Shift>
-                            )}
-                        </DayColumn>
-                    ))}
-                </ScheduleContainer>
-
+                {loading ?
+                    <Row className='w-100'>
+                        <Col className='p-5 text-center'>
+                            <Spinner />
+                        </Col>
+                    </Row>
+                    : allDuties && allDuties.length > 0 ?
+                        <ScheduleContainer>
+                            {allDays.map((day) => (
+                                <DayColumn key={day}>
+                                    <Title>{day}</Title>
+                                    {shiftsData[day]?.length > 0 ? (
+                                        shiftsData[day].map((shift, index) => (
+                                            <Shift key={index} bgColor={shift.bgColor} >
+                                                <p className="mb-1 d-flex justify-content-between" style={{ fontSize: '13px' }}><span className="text-muted" ><FaBus /> Vehicle:</span> {shift.vehicle}</p>
+                                                <p className="mb-1 d-flex justify-content-between" style={{ fontSize: '13px' }}><span className="text-muted" ><FaUser /> Driver:</span> {shift.driver}</p>
+                                                <p className="mb-1 d-flex justify-content-between" style={{ fontSize: '13px' }}><span className="text-muted" ><FaUser /> Conductor:</span> {shift.conductor}</p>
+                                                <p className="mb-1 d-flex justify-content-between" style={{ fontSize: '13px' }}><span className="text-muted" ><FaRegClock /> Start Time:</span> {shift.startTime}</p>
+                                                <p className="mb-1 d-flex justify-content-between" style={{ fontSize: '13px' }}><span className="text-muted" ><GiDuration /> Duration:</span> {shift.duration}</p>
+                                            </Shift>
+                                        ))
+                                    ) : (
+                                        <Shift bgColor="#bdc3c7">DAY OFF</Shift>
+                                    )}
+                                </DayColumn>
+                            ))}
+                        </ScheduleContainer>
+                        : <h3>Data not available</h3>
+                }
                 <Modal size="lg" isOpen={modal}
                     toggle={() => setModal(!modal)}>
                     <ModalHeader toggle={() => setModal(!modal)}>Add New Duty</ModalHeader>
@@ -314,7 +327,7 @@ const ScheduleContainer = styled.div`
 `;
 
 const DayColumn = styled.div`
-  padding: 15px;
+  padding: 0px;
   border-radius: 8px;
   min-height: 180px;
   display: flex;
@@ -345,7 +358,8 @@ const Shift = styled.div`
   color: #000;
   background: ${(props) => props.bgColor || "#999"};
   width: 100%;
-  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;  max-width: 120px;
+  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;  
+  max-width: 170px;
 `;
 
 export default Duty

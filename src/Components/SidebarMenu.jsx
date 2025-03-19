@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { FaBus, FaUser, FaTimes, } from "react-icons/fa";
+import { FaBus, FaUser, FaTimes, FaHome, } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
 
 const SidebarMenu = ({ toggleSidebar, sidebarOpen }) => {
@@ -8,7 +8,8 @@ const SidebarMenu = ({ toggleSidebar, sidebarOpen }) => {
     <>
       <Sidebar className={sidebarOpen ? "open" : ""}>
         <CloseButton onClick={toggleSidebar}><FaTimes /></CloseButton>
-        <Logo>Dashboard</Logo>
+        {/* <Logo>Dashboard</Logo> */}
+        <NavItem to="/"><FaHome /> DashBoard</NavItem>
         <NavItem to="/duty"><FaUser /> Duty</NavItem>
         <NavItem to='/vehicle'><FaBus /> Vehicle</NavItem>
         <NavItem to='/crew'><FaUser /> Crew</NavItem>
