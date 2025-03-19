@@ -6,6 +6,9 @@ import { FaPlus } from "react-icons/fa";
 //Flatpickr
 import "flatpickr/dist/themes/material_blue.css"
 import Flatpickr from "react-flatpickr"
+import moment from "moment";
+import { toast } from 'react-toastify';
+
 
 const shiftsData = {
     Monday: [{ type: "Night", time: "17:01-24:31", bgColor: "#fff" }],
@@ -20,28 +23,52 @@ const shiftsData = {
     Sunday: [],
 };
 
-const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const allDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",];
 
 const Duty = () => {
     const [modal, setModal] = useState(false);
+
     const [loading, setLoading] = useState(false);
     const [duty_date, setDuty_date] = useState();
     const [allVehicle, setAllVehicle] = useState();
+    const [startTime, setStartTime] = useState(null);
 
+    const [timeError, setTimeError] = useState();
     const [dateError, setDateError] = useState();
     const [formData, setFormData] = useState({
-        vehicle: '',
+        vehicle: '', driver: '', conductor: '', duration: ''
     });
-    const [allData, setAllData] = useState();
+    const [allDuties, setAllDuties] = useState();
+    const [allDrivers, setAllDrivers] = useState();
+    const [allconductors, setAllconductors] = useState();
     const api_url = 'http://localhost:3000/api';
 
     useEffect(() => {
-        fetch_data();
+        fetchCrewData();
         fetch_vehicle();
+        fetchDuties();
     }, []);
+    //fetch Duties
+    const fetchDuties = async () => {
+        try {
+            let response = await fetch(`${api_url}/getall`, {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            if (response.status === 200) {
+                const results = await response.json();
+                setAllDuties(results.data)
+            }
+        } catch (err) {
+            console.log(err, 'data fetching error')
+        }
+    };
+
+    //fetch vehicles
     const fetch_vehicle = async () => {
         try {
-            setLoading(true)
             let response = await fetch(`${api_url}/vehicles`, {
                 method: 'GET',
                 headers: {
@@ -51,15 +78,14 @@ const Duty = () => {
             if (response.status === 200) {
                 const results = await response.json();
                 setAllVehicle(results.data)
-                setLoading(false)
             }
         } catch (err) {
-            console.log(err, 'customers fetching error')
+            console.log(err, 'data fetching error')
         }
     };
-    const fetch_data = async () => {
+    //fetch drivers
+    const fetchCrewData = async () => {
         try {
-            setLoading(true)
             let response = await fetch(`${api_url}/crew`, {
                 method: 'GET',
                 headers: {
@@ -68,11 +94,14 @@ const Duty = () => {
             });
             if (response.status === 200) {
                 const results = await response.json();
-                setAllData(results.data)
-                setLoading(false)
+                const crewData = results.data;
+                const find_drivers = crewData.filter((d) => d.role === 'Driver');
+                const find_conductor = crewData.filter((d) => d.role === 'Conductor');
+                setAllDrivers(find_drivers);
+                setAllconductors(find_conductor)
             }
         } catch (err) {
-            console.log(err, 'customers fetching error')
+            console.log(err, 'data fetching error')
         }
     };
     const handleChange = (e) => {
@@ -83,8 +112,15 @@ const Duty = () => {
         e.preventDefault();
         if (e.target.checkValidity()) {
             try {
-                let payload = { name, role }
-                let response = await fetch(`${api_url}/insert_crew`, {
+                let payload = {
+                    date: duty_date,
+                    vehicleId: formData.vehicle,
+                    driverId: formData.driver,
+                    conductorId: formData.conductor,
+                    startTime: moment(startTime).format("HH:mm A"),
+                    duration: formData.duration
+                }
+                let response = await fetch(`${api_url}/assign_duty`, {
                     method: 'POST',
                     headers: {
                         "Content-Type": "application/json",
@@ -93,10 +129,14 @@ const Duty = () => {
                 });
                 if (response.status === 200) {
                     const results = await response.json();
-                    toast.success(results.message);
+                    toast(results.message);
                     setModal(false);
+                    setDuty_date('');
+                    setStartTime('')
+                    setFormData({
+                        vehicle: '', driver: '', conductor: '', duration: ''
+                    });
 
-                    fetch_data();
                 } else {
                     toast.error('Something went wrong!')
                 }
@@ -106,11 +146,15 @@ const Duty = () => {
         } else {
             e.target.classList.add('was-validated')
             if (!duty_date) {
-                setDateError('Date is required')
+                setDateError('This field is required')
+            }
+            if (!startTime) {
+                setTimeError('This field is required')
             }
         }
 
     };
+
     return (
         <>
             <Layout>
@@ -126,7 +170,11 @@ const Duty = () => {
                             {shiftsData[day]?.length > 0 ? (
                                 shiftsData[day].map((shift, index) => (
                                     <Shift key={index} bgColor={shift.bgColor}>
-                                        {shift.type} <br /> {shift.time}
+                                        <p className='mb-1'><span className='text-muted'>Vehicle:</span>dfdsf </p>
+                                        <p className='mb-1'><span className='text-muted'>Driver:</span> </p>
+                                        <p className='mb-1'><span className='text-muted'>Conductor:</span> </p>
+                                        <p className='mb-1'><span className='text-muted'>Start Time:</span> </p>
+                                        <p className='mb-1'><span className='text-muted'>Duration:</span> </p>
                                     </Shift>
                                 ))
                             ) : (
@@ -168,12 +216,66 @@ const Duty = () => {
                                     <FormGroup>
                                         <Label>Vehicle *</Label>
                                         <Input type="select" name="vehicle" value={formData.vehicle} onChange={handleChange} required >
-                                            <option value=''>Select</option>
+                                            <option value=''>Select Vehicle</option>
                                             {allVehicle?.map((data) => (
                                                 <option value={data._id}>{data.name}</option>
                                             ))}
                                         </Input>
 
+                                        <FormFeedback>This field is required</FormFeedback>
+                                    </FormGroup>
+                                </Col>
+                                <Col lg={6} md={12} >
+                                    <FormGroup>
+                                        <Label>Driver *</Label>
+                                        <Input type="select" name="driver" value={formData.driver} onChange={handleChange} required >
+                                            <option value=''>Select Driver</option>
+                                            {allDrivers?.map((data) => (
+                                                <option value={data._id}>{data.name}</option>
+                                            ))}
+                                        </Input>
+                                        <FormFeedback>This field is required</FormFeedback>
+                                    </FormGroup>
+                                </Col>
+                                <Col lg={6} md={12} >
+                                    <FormGroup>
+                                        <Label>Conductor *</Label>
+                                        <Input type="select" name="conductor" value={formData.conductor} onChange={handleChange} required >
+                                            <option value=''>Select Conductor</option>
+                                            {allconductors?.map((data) => (
+                                                <option value={data._id}>{data.name}</option>
+                                            ))}
+                                        </Input>
+                                        <FormFeedback>This field is required</FormFeedback>
+                                    </FormGroup>
+                                </Col>
+                                <Col lg={6} md={12} >
+                                    <FormGroup>
+                                        <Label>Start Time *</Label>
+                                        <Flatpickr
+                                            value={startTime}
+                                            options={{
+                                                enableTime: true,
+                                                noCalendar: true,
+                                                dateFormat: "h:i K",
+                                                time_24hr: false,
+                                            }}
+                                            onChange={(selectedDates) => {
+                                                setStartTime(selectedDates[0]);
+                                                setTimeError('')
+                                            }}
+                                            placeholder="Select Time"
+                                            required
+                                            className={`form-control ${timeError ? 'is-invalid' : ''}`}
+
+                                        />
+                                        <small className="text-danger">{timeError ? timeError : ''}</small>
+                                    </FormGroup>
+                                </Col>
+                                <Col lg={6} md={12} >
+                                    <FormGroup>
+                                        <Label>Duration *</Label>
+                                        <Input type="number" name="duration" placeholder='Enter Duration In Hour' value={formData.duration} onChange={handleChange} required />
                                         <FormFeedback>This field is required</FormFeedback>
                                     </FormGroup>
                                 </Col>
@@ -239,7 +341,7 @@ const Shift = styled.div`
   border-radius: 6px;
   font-size: 14px;
   font-weight: 600;
-  text-align: center;
+  text-align: left;
   color: #000;
   background: ${(props) => props.bgColor || "#999"};
   width: 100%;

@@ -30,7 +30,7 @@ const Vehicle = () => {
                 setLoading(false)
             }
         } catch (err) {
-            console.log(err, 'customers fetching error')
+            console.log(err, 'data fetching error')
         }
     };
     const handleSubmit = async (e) => {
@@ -73,28 +73,33 @@ const Vehicle = () => {
                                 <Button className='btn btn-primary' onClick={() => setModal(true)}><FaPlus />   Add New</Button>
                             </div>
                             <div className="table_here table-responsive mt-4">
-                                <Table className='bordered table-bordered table-hover'>
-                                    <thead>
-                                        <tr>
-                                            <th className='bg-dark text-light'>Sr. No.</th>
-                                            <th className='bg-dark text-light'>Name</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {loading ?
-                                            <>
+                                {loading ?
+                                    <>
+                                        <Row className='w-100'>
+                                            <Col className='p-5 text-center'>
                                                 <Spinner />
-                                            </>
-                                            : allVehicle && allVehicle.length > 0 ?
-                                                allVehicle?.map((data, id) => (
-                                                    <tr>
+                                            </Col>
+                                        </Row>
+                                    </>
+                                    : allVehicle && allVehicle.length > 0 ?
+                                        <Table className='bordered table-bordered table-hover'>
+                                            <thead>
+                                                <tr>
+                                                    <th className='bg-dark text-light'>Sr. No.</th>
+                                                    <th className='bg-dark text-light'>Name</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {allVehicle?.map((data, id) => (
+                                                    <tr key={id}>
                                                         <td>{id + 1}</td>
                                                         <td>{data.name}</td>
                                                     </tr>
-                                                )) : <h3>Data not available</h3>}
-                                    </tbody>
-                                </Table>
-
+                                                ))}
+                                            </tbody>
+                                        </Table>
+                                        : <h3>Data not available</h3>
+                                }
                             </div>
                         </CardBody>
                     </StyledCard>

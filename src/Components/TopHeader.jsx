@@ -19,18 +19,17 @@ const Header = styled.div`
   background: white;
   padding: 15px;
   border-radius: 10px;
-  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
   flex-direction: column;
   text-align: center;
   margin-top: 40px;
 
   @media (min-width: 768px) {
-    display: none;  /* Desktop view me hide karne ke liye */
+    display: none;  
   }
 `;
 
 const MenuButton = styled.div`
-  position: absolute; /* fixed se absolute kiya */
+  position: absolute;
   top: 15px;
   left: 15px;
   cursor: pointer;
