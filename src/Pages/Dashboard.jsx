@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import styled from "styled-components";
 import { Card, CardBody } from 'reactstrap';
 import Layout from './Layout';
+import { FaUser, FaBus, FaRegClock } from "react-icons/fa";
 
 const Dashboard = () => {
   const [allVehicle, setAllVehicle] = useState();
@@ -57,21 +58,22 @@ const Dashboard = () => {
       <Layout >
         <Card>
           <CardBody>
-            <h4>Vehicle Duty Crew Management System</h4>
+            <h5><FaBus />Welcome to!
+              Vehicle Duty Crew Management System</h5>
           </CardBody>
         </Card>
         <Stats>
           <StatCard>
+            <p className='fs-6'><FaBus /> Vehicles</p>
             <h3>{allVehicle?.length}</h3>
-            <p>Vehicle</p>
           </StatCard>
           <StatCard>
+            <p className='fs-6'><FaUser /> Drivers</p>
             <h3>{allDrivers?.length}</h3>
-            <p>Drivers</p>
           </StatCard>
           <StatCard>
+            <p className='fs-6'><FaUser /> Conductors</p>
             <h3>{allconductors?.length}</h3>
-            <p>Conductor</p>
           </StatCard>
         </Stats>
       </Layout>
