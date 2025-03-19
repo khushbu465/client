@@ -58,8 +58,8 @@ const Dashboard = () => {
       <Layout >
         <Card>
           <CardBody>
-            <h5><FaBus />Welcome to!
-              Vehicle Duty Crew Management System</h5>
+            <h5><FaBus /> Welcome to! <br/>
+            &emsp;  Vehicle Duty Crew Management System</h5>
           </CardBody>
         </Card>
         <Stats>

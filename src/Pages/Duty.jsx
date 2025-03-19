@@ -224,7 +224,7 @@ const Duty = () => {
                         <Col md={12}>
                             <Form onSubmit={hanle_fetch_duties} noValidate>
                                 <Row>
-                                    <Col md={4}>
+                                    <Col md={3}>
                                         <FormGroup>
                                             <Label for="start_Date">From Date </Label>
                                             <Input
@@ -244,7 +244,7 @@ const Duty = () => {
                                             <small className="error">{errorstaDate ? errorstaDate : ''}</small>
                                         </FormGroup>
                                     </Col>
-                                    <Col md={4}>
+                                    <Col md={3}>
                                         <FormGroup>
                                             <Label for="end_date">To Date </Label>
                                             <Input
@@ -268,8 +268,8 @@ const Duty = () => {
                                         </FormGroup>
                                     </Col>
                                     <Col md={4}>
-                                        <FormGroup className="mt-4 pt-1">
-                                            <Button className="btn btn-info" type="submit">Show</Button>
+                                        <FormGroup className="mt-4 pt-2">
+                                            <Button className="btn btn-info text-light" type="submit">Show</Button>
                                         </FormGroup>
                                     </Col>
                                 </Row>
