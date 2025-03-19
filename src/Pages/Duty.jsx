@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import styled from "styled-components";
 import Layout from './Layout';
-import { Button, Modal, ModalBody, Form, Row, Col, FormFeedback, Input, FormGroup, Label, ModalHeader, Table, Spinner } from "reactstrap";
+import { Button, Modal, ModalBody, Form, Row, Col, FormFeedback, Input, FormGroup, Label, ModalHeader, Table, Spinner, CardBody } from "reactstrap";
 import { FaPlus, FaUser, FaBus, FaRegClock } from "react-icons/fa";
 //Flatpickr
 import "flatpickr/dist/themes/material_blue.css"
@@ -15,7 +15,10 @@ const allDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday
 const Duty = () => {
     const [modal, setModal] = useState(false);
     const [shiftsData, setShiftsData] = useState({});
-
+    const [start_Date, setStart_Date] = useState();
+    const [end_date, setEnd_date] = useState();
+    const [errorstaDate, setErrorstaDate] = useState();
+    const [errorendDate, setErrorendDate] = useState();
     const [loading, setLoading] = useState(false);
     const [duty_date, setDuty_date] = useState();
     const [allVehicle, setAllVehicle] = useState();
@@ -159,7 +162,56 @@ const Duty = () => {
         }
 
     };
+    const hanle_fetch_duties = async (e) => {
+        e.preventDefault();
+        if (e.target.checkValidity()) {
+            try {
+                if (!start_Date && !end_date) {
+                    toast('Please select start and end date')
+                } else {
+                    setLoading(true);
 
+                    let response = await fetch(`${api_url}/duties?startDate=${start_Date}&endDate=${end_date}`, {
+                        method: 'GET',
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    });
+                    if (response.status === 200) {
+                        const results = await response.json();
+                        const apiData = results.data;
+                        setAllDuties(apiData);
+                        const formattedData = {};
+                        apiData.forEach((shift) => {
+                            const day = new Date(shift.date).toLocaleDateString("en-US", { weekday: "long" });
+                            if (!formattedData[day]) formattedData[day] = [];
+                            formattedData[day].push({
+                                vehicle: shift.vehicleId.name,
+                                driver: shift.driverId.name,
+                                conductor: shift.conductorId.name,
+                                startTime: shift.startTime,
+                                duration: `${shift.duration} hrs`,
+                                bgColor: "#fff",
+                            });
+                        });
+                        setShiftsData(formattedData);
+                        setLoading(false)
+                    }
+                }
+            } catch (err) {
+                console.log(err, 'err')
+            }
+
+        } else {
+            e.target.classList.add("was-validated");
+            if (!start_Date) {
+                setErrorstaDate('Please select from date')
+            }
+            if (!end_date) {
+                setErrorendDate('Please select to date')
+            }
+        }
+    }
     return (
         <>
             <Layout>
@@ -167,6 +219,64 @@ const Duty = () => {
                     <h4>Duty</h4>
                     <Button className='btn btn-primary' onClick={() => setModal(true)}><FaPlus />   Add New</Button>
                 </div>
+                <CardBody>
+                    <Row>
+                        <Col md={12}>
+                            <Form onSubmit={hanle_fetch_duties} noValidate>
+                                <Row>
+                                    <Col md={4}>
+                                        <FormGroup>
+                                            <Label for="start_Date">From Date </Label>
+                                            <Input
+                                                value={start_Date ? start_Date : null}
+                                                type="text" tag={Flatpickr}
+                                                name="start_Date"
+                                                id="start_Date" placeholder="Enter Date"
+                                                options={{
+                                                    dateFormat: 'd-m-Y',
+                                                }}
+                                                onChange={(selectedDates) => {
+                                                    setStart_Date(selectedDates[0]);
+                                                    setErrorstaDate('')
+                                                }} required
+                                                className={`form-control ${errorstaDate ? 'is-invalid' : ''}`}
+                                            />
+                                            <small className="error">{errorstaDate ? errorstaDate : ''}</small>
+                                        </FormGroup>
+                                    </Col>
+                                    <Col md={4}>
+                                        <FormGroup>
+                                            <Label for="end_date">To Date </Label>
+                                            <Input
+                                                type="text" tag={Flatpickr}
+                                                name="end_date"
+                                                value={end_date ? end_date : null}
+                                                id="end_date" placeholder="Enter Date"
+                                                options={{
+                                                    dateFormat: 'd-m-Y',
+                                                    minDate: start_Date
+                                                }}
+                                                onChange={(selectedDates) => {
+                                                    setEnd_date(selectedDates[0]);
+                                                    setErrorendDate('')
+                                                }}
+                                                className={`form-control ${errorendDate ? 'is-invalid' : ''}`}
+                                                required
+                                            />
+                                            <small className="error">{errorendDate ? errorendDate : ''}</small>
+
+                                        </FormGroup>
+                                    </Col>
+                                    <Col md={4}>
+                                        <FormGroup className="mt-4 pt-1">
+                                            <Button className="btn btn-info" type="submit">Show</Button>
+                                        </FormGroup>
+                                    </Col>
+                                </Row>
+                            </Form>
+                        </Col>
+                    </Row>
+                </CardBody>
                 <hr />
                 {loading ?
                     <Row className='w-100'>
@@ -195,7 +305,11 @@ const Duty = () => {
                                 </DayColumn>
                             ))}
                         </ScheduleContainer>
-                        : <h3>Data not available</h3>
+                        : <Row>
+                            <Col className='text-center pt-5'>
+                                <h3>Data not available</h3>
+                            </Col>
+                        </Row>
                 }
                 <Modal size="lg" isOpen={modal}
                     toggle={() => setModal(!modal)}>
